@@ -12,7 +12,7 @@ Container.prototype.render = function() {
 function Good( options ) {
 	Container.call(this);
 
-	this.id_product = options.id_product || '';
+	this.id_product = options.id_product;
 	this.price = options.price;
 	this.name = options.name;
 	this.reviews = options.reviews;
@@ -25,29 +25,102 @@ Good.prototype.constructor = Good;
 
 Good.prototype.render = function() {
 	var self = this;
-	var	$divGood = $('<div>').attr({'id' : 'product_' + this.id_product, 'class' : 'good'});
-	var	$divName = $('<div>').attr({'class' : 'product_name'}).text(this.name);
-	var	$divPrice = $('<div>').attr({'class' : 'product_price'}).text(this.price + ' руб.');
-	var	$divReviews = $('<div>').attr({'class' : 'product_reviews'}).text('Отзывы');
-	$('<div>').attr({'class' : 'product_addNewReview'}).text('Добавить отзыв').appendTo($divReviews);
+	this.$divGood = $('<div>').attr({'id' : 'product_' + this.id_product, 'class' : 'good'});
+	this.$divName = $('<div>').attr({'class' : 'product_name'}).text(this.name);
+	this.$divPrice = $('<div>').attr({'class' : 'product_price'}).text(this.price + ' руб.');
+
+	this.$divName.appendTo(this.$divGood);
+	this.$divPrice.appendTo(this.$divGood);
+	this.$buttonBuy = $('<button>').attr({'class' : 'product_button_buy'}).text('Купить');
+	this.$buttonBuy.appendTo(this.$divGood);
+
+	this.renderReviews();
+
+	return this.$divGood;
+}
+Good.prototype.renderReviews = function() {
+	var self = this;
+	this.$divReviews = $('<div>').attr({'class' : 'product_reviews'}).text('Отзывы');
+	this.$divAddNewReview = $('<div>').attr({'class' : 'product_addNewReview'}).text('Добавить отзыв');
+	this.$divAddNewReview.appendTo(this.$divReviews);
+	// ---- onClick -----------
+	this.$divAddNewReview.on('click', function() {
+		self.renderModale();
+	})
+	// ---- end onClick -----------
+
 		$(this.reviews).each(function() {
-		var	$divReview = $('<div>').attr({'class' : 'product_review'});
-			( $('<span>').attr({'class' : 'product_submit'}).text(this.submit) ).appendTo($divReview);
-			( $('<span>').attr({'class' : 'product_addPlus'}).text('+') ).appendTo($divReview);
-			( $('<span>').attr({'class' : 'product_delete'}).text('-') ).appendTo($divReview);
-			( $('<span>').attr({'class' : 'product_textAbout'}).text(this.textAbout) ).appendTo($divReview);
+			var $divReview = $('<div>').attr({'class' : 'product_review'});
+			var $spanSubmit = ( $('<span>').attr({'class' : 'product_submit'}).text(this.submit) );
+			var $spanAddPlus = ( $('<span>').attr({'class' : 'product_addPlus'}).text('+') );
+			var $spanDelete = ( $('<span>').attr({'class' : 'product_delete'}).text('-') );
+			var $spanTextAbout = ( $('<span>').attr({'class' : 'product_textAbout'}).text(this.textAbout) );
+			$divReview
+				.append($spanSubmit)
+				.append($spanAddPlus)
+				.append($spanDelete)
+				.append($spanTextAbout);
+			$divReview.appendTo(self.$divReviews);
 
-			$divReview.appendTo($divReviews);
+			$spanDelete.on('click', this, function(e) {
+				self.deleteReview( e.data );
+			});
+			$spanAddPlus.on('click', this, function(e) {
+				self.addLike( e.data );
+			})
 		});
+	this.$divReviews.appendTo(this.$divGood);
+}
+Good.prototype.renderModale = function() {
+	var self = this;
+	this.$divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
+	this.$formModale = $('<form>').attr({'class':'form_modale'})
+		.append( $('<input>').attr({'type':'text','class':'input_modale'}) )
+		.append( $('<button>').attr({'class':'button_modale'}).text('OK') );
 
-	$divName.appendTo($divGood);
-	$divPrice.appendTo($divGood);
-	$divReviews.appendTo($divGood);
-	$('<button>').attr({'class' : 'product_button_buy'}).text('Купить').appendTo($divGood)
+	this.$divModale.append( this.$formModale );
+	this.$divModale.appendTo( $('body') );
 
-	return $divGood;
+	this.$divModale.on('click', '.button_modale', function(e) {
+		e.preventDefault();
+		self.newReviewText = $(this).parent().find('.input_modale').val();
+		self.addToReviews();
+		self.$divModale.remove();
+	})
+}
+Good.prototype.addToReviews = function() {
+	this.reviews.push({
+					submit : '0',
+					textAbout : this.newReviewText
+				});
+	this.cleanOldAndRenderReviews();
+}
+Good.prototype.cleanOldAndRenderReviews = function() {
+	this.$divReviews.remove();
+	this.renderReviews();
+}
+Good.prototype.addLike = function( review ) {
+	var newSubmit = parseInt(review.submit);
+	newSubmit++;
+	review.submit = newSubmit;
+
+	this.cleanOldAndRenderReviews();
+}
+Good.prototype.deleteReview = function( review ) {
+	var self = this;
+	var ind;
+	$(this.reviews).each(function(inx) {
+		if(this === review) {
+			ind = inx;
+		}
+	});
+	
+	this.reviews.splice(ind,1);
+
+	this.cleanOldAndRenderReviews();
 }
 // --------------- end class Good ---------------
+
 function Catalog() {
 	Container.call(this);
 
@@ -77,121 +150,10 @@ Catalog.prototype.getListGoods = function() {
 	});
 }
 Catalog.prototype.render = function() {
-	// создаем блок div для каталога
 	this.htmlCode = $('div').attr({'id':this.id});
 	var self = this;
 	$(this.goodItems).each(function() {
 		self.htmlCode.append( this.render() );
 	});
-	$('.good').on('click','.product_addNewReview', function() {
-		this.idProductForAddReview = $(this).parent().parent().attr('id');
-		console.log(this.idProductForAddReview);
-
-		this.$divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
-		this.$formModale = $('<form>').attr({'class':'form_modale'});
-		( $('<input>').attr({'type':'text','class':'input_modale'}) ).appendTo(this.$formModale);
-		( $('<button>').attr({'class':'button_modale'}).text('OK') ).appendTo(this.$formModale);
-		this.$divModale.append( this.$formModale );
-		this.$divModale.appendTo( $('body') );
-
-		var self = this;
-		$('.modale').on('click','.button_modale', function(e) {
-		e.preventDefault();
-		self.newReviewText = $(this).parent().find('.input_modale').val();
-		self.$divModale.remove();
-		var $blockReviews = $( '#' + self.idProductForAddReview + ' .product_reviews' );
-
-		var	$blockReview = $('<div>').attr({'class' : 'product_review'});
-			( $('<span>').attr({'class' : 'product_submit'}).text('0') ).appendTo($blockReview);
-			( $('<span>').attr({'class' : 'product_addPlus'}).text('+') ).appendTo($blockReview);
-			( $('<span>').attr({'class' : 'product_delete'}).text('-') ).appendTo($blockReview);
-			( $('<span>').attr({'class' : 'product_textAbout'}).text(self.newReviewText) ).appendTo($blockReview);
-
-		$blockReview.appendTo($blockReviews);
-		});
-	})
 }
-
-
-// Catalog.prototype.render = function(wrapper_catalog) {
-// 	this.$divCatalog = $('<div>').attr({'id':this.id}).text('Каталог');
-// 	this.$divCatalog.appendTo(wrapper_catalog);
-// 	this.getGoods();
-// }
-// Catalog.prototype.getGoods = function() {
-// 	$.ajax({
-// 		url : 'catalog.json',
-// 		dataType : 'json',
-// 		context : this,
-// 		success : function(data) {
-// 			if(data.result != 1) {
-// 				console.log('что-то не так на сервере');
-// 				return
-// 			}
-// 			this.goods = data.goods;
-// 			this.renderGoods(this.goods)
-// 		}
-// 	})
-// }
-// Catalog.prototype.renderGoods = function(goods) {
-// 	var self = this;
-// 	$(goods).each(function() {
-// 	var	$divGood = $('<div>').attr({'id' : 'product_' + this.id_product, 'class' : 'good'});
-// 	var	$divName = $('<div>').attr({'class' : 'product_name'}).text(this.name);
-// 	var	$divPrice = $('<div>').attr({'class' : 'product_price'}).text(this.price + ' руб.');
-// 	var	$divReviews = $('<div>').attr({'class' : 'product_reviews'}).text('Отзывы');
-// 	$('<div>').attr({'class' : 'product_addNewReview'}).text('Добавить отзыв').appendTo($divReviews);
-// 		$(this.reviews).each(function() {
-// 		var	$divReview = $('<div>').attr({'class' : 'product_review'});
-// 			( $('<span>').attr({'class' : 'product_submit'}).text(this.submit) ).appendTo($divReview);
-// 			( $('<span>').attr({'class' : 'product_addPlus'}).text('+') ).appendTo($divReview);
-// 			( $('<span>').attr({'class' : 'product_delete'}).text('-') ).appendTo($divReview);
-// 			( $('<span>').attr({'class' : 'product_textAbout'}).text(this.textAbout) ).appendTo($divReview);
-
-// 			$divReview.appendTo($divReviews);
-// 		});
-
-// 		$divName.appendTo($divGood);
-// 		$divPrice.appendTo($divGood);
-// 		$divReviews.appendTo($divGood);
-// 		$('<button>').attr({'class' : 'product_button_buy'}).text('Купить').appendTo($divGood);
-// 		$divGood.appendTo(self.$divCatalog);
-// 	});
-// 	$('.good').on('click','.product_addNewReview', function() {
-// 		this.idProductorAddNewReview = $(this).closest('.good').attr('id').split('_')[1];
-// 		catalog.addNewReview(this.idProductorAddNewReview);
-// });
-// }
-// Catalog.prototype.addNewReview = function(id_product) {
-// 	this.$divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
-// 	this.$formModale = $('<form>').attr({'class':'form_modale'});
-// 	( $('<input>').attr({'type':'text','class':'input_modale'}) ).appendTo(this.$formModale);
-// 	( $('<button>').attr({'class':'button_modale'}).text('OK') ).appendTo(this.$formModale);
-// 	this.$divModale.append( this.$formModale );
-// 	this.$divModale.appendTo( $('body') );
-
-// 	this.goodForAddNewReview = $(this.goods).filter(function() {
-// 		return this.id_product == id_product;
-// 	});
-
-// 	var self = this;
-
-// 		$('.modale').on('click','.button_modale', function(e) {
-// 		e.preventDefault();
-// 		self.newReviewText = $(this).parent().find('.input_modale').val();
-// 		self.$divModale.empty();
-// 		var $blockReviews = $('#product_' + id_product + ' .product_reviews');
-
-// 		var	$blockReview = $('<div>').attr({'class' : 'product_review'});
-// 			( $('<span>').attr({'class' : 'product_submit'}).text('0') ).appendTo($blockReview);
-// 			( $('<span>').attr({'class' : 'product_addPlus'}).text('+') ).appendTo($blockReview);
-// 			( $('<span>').attr({'class' : 'product_delete'}).text('-') ).appendTo($blockReview);
-// 			( $('<span>').attr({'class' : 'product_textAbout'}).text(self.newReviewText) ).appendTo($blockReview);
-
-// 		$blockReview.appendTo($blockReviews);
-// 		// var $newReview = $()
-
-		
-// 	});
-// }
 //# sourceMappingURL=main.js.map
