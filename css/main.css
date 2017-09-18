@@ -14,15 +14,15 @@
   display: block;
   margin-top: 10px; }
 
-.product_reviews {
+.reviews {
   border-top: 1px solid gray; }
 
-.product_review {
+.review {
   background-color: gray;
   min-height: 25px;
   border-top: 1px solid #fff; }
 
-.product_addNewReview {
+.reviews_addNewReview {
   float: right;
   font-size: 50%;
   background-color: blue;
@@ -30,13 +30,13 @@
   cursor: pointer;
   color: #fff;
   padding: 3px; }
-  .product_addNewReview:hover {
+  .reviews_addNewReview:hover {
     background-color: darkblue; }
 
-.product_textAbout {
+.review_textAbout {
   margin-right: 70px; }
 
-.product_delete, .product_submit, .product_addPlus {
+.review_delete, .review_submit, .review_addPlus {
   float: right;
   width: 20px;
   height: 20px;
@@ -45,7 +45,7 @@
   color: #fff;
   text-align: center;
   cursor: pointer; }
-  .product_delete:hover, .product_submit:hover, .product_addPlus:hover {
+  .review_delete:hover, .review_submit:hover, .review_addPlus:hover {
     background-color: darkred; }
 
 .product_button_buy {
