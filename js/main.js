@@ -14,7 +14,6 @@ function Catalog() {
 
 	this.id = 'catalogGoods';
 	this.goodItems = [];
-	this.idContainer = '';
 	this.htmlCode = '';
 }
 Catalog.prototype = Object.create(Container.prototype);
@@ -61,19 +60,16 @@ Good.prototype.constructor = Good;
 
 Good.prototype.render = function() {
 	var self = this;
-	this.$divGood = $('<div>').attr({'id' : 'product_' + this.id_product, 'class' : 'good'});
-	this.$divName = $('<div>').attr({'class' : 'product_name'}).text(this.name);
-	this.$divPrice = $('<div>').attr({'class' : 'product_price'}).text(this.price + ' руб.');
+	var $divGood = $('<div>').attr({'id' : 'product_' + this.id_product, 'class' : 'good'});
+	$divGood
+		.append( $('<div>').attr({'class' : 'product_name'}).text(this.name) )
+		.append( $('<div>').attr({'class' : 'product_price'}).text(this.price + ' руб.') )
+		.append( $('<button>').attr({'class' : 'product_button_buy'}).text('Купить') );
 
-	this.$divName.appendTo(this.$divGood);
-	this.$divPrice.appendTo(this.$divGood);
-	this.$buttonBuy = $('<button>').attr({'class' : 'product_button_buy'}).text('Купить');
-	this.$buttonBuy.appendTo(this.$divGood);
+	var reviews = new Reviews( this.reviewsAndSubmit );
+	reviews.render( $divGood );
 
-	this.reviews = new Reviews( this.reviewsAndSubmit );
-	this.reviews.render( this.$divGood );
-
-	return this.$divGood;
+	return $divGood;
 
 }
 // --------------- end class Good ---------------
@@ -84,6 +80,8 @@ function Reviews( list ) {
 
 	this.reviewsAndSubmit = list;
 	this.reviewsAndSubmitArray = [];
+	this.$goodToChangeReviews = '';
+	this.$divReviews = '';
 	this.className = 'reviews';
 	this.htmlCode = '';
 }
@@ -91,19 +89,17 @@ Reviews.prototype = Object.create(Container.prototype);
 Reviews.prototype.constructor = Reviews;
 
 Reviews.prototype.render = function( thisGood ) {
-	this.$goodToChangeReviews = thisGood;
 	var self = this;
+	this.$goodToChangeReviews = thisGood;
 	this.$divReviews = $('<div>').attr({'class' : this.className}).text('Отзывы');
-	this.$divAddNewReview = $('<div>').attr({'class' : this.className+'_addNewReview'}).text('Добавить отзыв');
-	this.$divAddNewReview.appendTo(this.$divReviews);	
-	// ---- review -------------
+	this.$divReviews
+		.append( $('<div>').attr({'class' : this.className+'_addNewReview'}).text('Добавить отзыв') );
+
 	$(this.reviewsAndSubmit).each(function() {
 		self.reviewsAndSubmitArray.push( new Review( this ) );
-		// console.log(this);
 	});
 
 	$(this.reviewsAndSubmitArray).each(function() {
-		// console.log( self.$divReviews );
 		this.render( self.$divReviews );
 	})
 
@@ -138,19 +134,12 @@ Reviews.prototype.render = function( thisGood ) {
 		});
 		self.deleteReview( indReview );
 	});
-
-	// this.$divReviews.on('click', '.review_delete', this, function(e) {
-	// 	console.log(e.data);
-	// 	console.log( $(e.target).parent() );
-	// });
-
 	// ---- end onClick -----------
 
 	thisGood.append( this.$divReviews );
 
 }
 Reviews.prototype.deleteReview = function( indReview ) {
-	
 	this.reviewsAndSubmit.splice(indReview,1);
 	this.cleanOldAndRenderReviews();
 }
@@ -160,19 +149,19 @@ Reviews.prototype.addLike = function( indReview ) {
 }
 Reviews.prototype.renderModale = function() {
 	var self = this;
-	this.$divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
-	this.$formModale = $('<form>').attr({'class':'form_modale'})
-		.append( $('<input>').attr({'type':'text','class':'input_modale'}) )
-		.append( $('<button>').attr({'class':'button_modale'}).text('OK') );
+	var $divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
+	var $formModale = $('<form>').attr({'class':'form_modale'})
+			.append( $('<input>').attr({'type':'text','class':'input_modale'}) )
+			.append( $('<button>').attr({'class':'button_modale'}).text('OK') );
 
-	this.$divModale.append( this.$formModale );
-	this.$divModale.appendTo( $('body') );
+	$divModale.append( $formModale );
+	$divModale.appendTo( $('body') );
 
-	this.$divModale.on('click', '.button_modale', function(e) {
+	$divModale.on('click', '.button_modale', function(e) {
 		e.preventDefault();
 		self.newReviewText = $(this).parent().find('.input_modale').val();
 		self.addToReviews();
-		self.$divModale.remove();
+		$divModale.remove();
 	})
 }
 Reviews.prototype.addToReviews = function() {
