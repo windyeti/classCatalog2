@@ -5,7 +5,7 @@
 			"id_product" : "001",
 			"name" : "Медведь бурый",
 			"price" : "175",
-			"reviews" : [
+			"reviewsAndSubmits" : [
 				{
 					"submit" : "5",
 					"textAbout" : "Очень хороший товар №1."
@@ -20,7 +20,7 @@
 			"id_product" : "002",
 			"name" : "Заяц с ушами",
 			"price" : "65",
-			"reviews" : [
+			"reviewsAndSubmits" : [
 				{
 					"submit" : "6",
 					"textAbout" : "Плохой, но дешевый."
@@ -35,7 +35,7 @@
 			"id_product" : "003",
 			"name" : "Блоха с кодковой",
 			"price" : "25",
-			"reviews" : [
+			"reviewsAndSubmits" : [
 				{
 					"submit" : "1",
 					"textAbout" : "Надо брать."
