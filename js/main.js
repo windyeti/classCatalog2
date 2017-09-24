@@ -100,9 +100,9 @@ Reviews.prototype.generateMarkup = function() {
 	var self = this;
 	if (!this.htmlCode)
 		$( '#good_' + this.id ).append( this.render() );
-	this.htmlCode.append( this.generateBlockReview() );	
+	this.htmlCode.append( this.generateBlockReviews() );	
 }
-Reviews.prototype.generateBlockReview = function() {
+Reviews.prototype.generateBlockReviews = function() {
 	if (!this.reviewsBlockHtmlCode)
 		this.reviewsBlockHtmlCode = $('<div>');
 	var self = this;
@@ -111,13 +111,14 @@ Reviews.prototype.generateBlockReview = function() {
 		this.render().appendTo( result );
 	});
 	this.reviewsBlockHtmlCode.html(result);
+	console.log(this.reviewsBlockHtmlCode);
 	return this.reviewsBlockHtmlCode
 }
 Reviews.prototype.renderModale = function() {
 	var self = this;
 	var $divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
 	var $formModale = $('<form>').attr({'class':'form_modale'})
-			.append( $('<input>').attr({'type':'text','class':'input_modale','autofocus':'true'}) )
+			.append( $('<input>').attr({'type':'text','class':'input_modale','autofocus':'autofocus'}) )
 			.append( $('<button>').attr({'class':'button_modale'}).text('OK') );
 
 	$divModale.append( $formModale );
@@ -130,7 +131,7 @@ Reviews.prototype.renderModale = function() {
 			submit : 0,
 			textAbout : self.newReviewText
 		});
-		self.htmlCode.append( self.ArrayObjsReviewAndSubmit[ self.ArrayObjsReviewAndSubmit.length - 1 ].render() );
+		self.generateBlockReviews();
 		$divModale.remove();
 	});
 }
@@ -161,7 +162,7 @@ Reviews.prototype.render = function() {
 		$divReviews.find('.review').filter(function(ind) {
 			if ( $(this).get(0) == $divReview.get(0) ) {
 				e.data.ArrayObjsReviewAndSubmit.splice([ind],1);
-				e.data.htmlCode.find('.review').remove();
+				// e.data.htmlCode.find('.review').remove();
 				e.data.generateMarkup();
 				return
 			}
