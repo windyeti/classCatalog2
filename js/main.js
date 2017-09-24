@@ -97,7 +97,6 @@ Reviews.prototype.makeArrayObjsReviewAndSubmit = function(list) {
 	return result
 }
 Reviews.prototype.generateMarkup = function() {
-	var self = this;
 	if (!this.htmlCode)
 		$( '#good_' + this.id ).append( this.render() );
 	this.htmlCode.append( this.generateBlockReviews() );	
@@ -105,13 +104,11 @@ Reviews.prototype.generateMarkup = function() {
 Reviews.prototype.generateBlockReviews = function() {
 	if (!this.reviewsBlockHtmlCode)
 		this.reviewsBlockHtmlCode = $('<div>');
-	var self = this;
 	var result = $('<div>');
 	$(this.ArrayObjsReviewAndSubmit).each(function() {
 		this.render().appendTo( result );
 	});
 	this.reviewsBlockHtmlCode.html(result);
-	console.log(this.reviewsBlockHtmlCode);
 	return this.reviewsBlockHtmlCode
 }
 Reviews.prototype.renderModale = function() {
@@ -150,7 +147,10 @@ Reviews.prototype.render = function() {
 		var $divReviews = $(e.target).parent().parent();
 		$divReviews.find('.review').filter(function(ind) {
 			if ( $(this).get(0) == $divReview.get(0) ) {
-				e.data[ind].render('changeSubmit');
+				var reviewCurrent = e.data[ind];
+				var submitNum = reviewCurrent.$spanSubmit.text();
+				submitNum++;
+				reviewCurrent.$spanSubmit.text( submitNum );
 				return
 			}
 		});
@@ -162,7 +162,6 @@ Reviews.prototype.render = function() {
 		$divReviews.find('.review').filter(function(ind) {
 			if ( $(this).get(0) == $divReview.get(0) ) {
 				e.data.ArrayObjsReviewAndSubmit.splice([ind],1);
-				// e.data.htmlCode.find('.review').remove();
 				e.data.generateMarkup();
 				return
 			}
@@ -186,23 +185,18 @@ Review.prototype = Object.create(Container.prototype);
 Review.prototype.constructor = Review;
 
 Review.prototype.render = function(codeAction) {
-	if (!this.htmlCode) {
-		this.htmlCode = $('<div>').attr({'class' : this.className});
-		this.$spanSubmit = $('<span>').attr({'class' : this.className+'_submit'}).text(this.submit);
-		this.$spanAddPlus = $('<span>').attr({'class' : this.className+'_addPlus'}).text('+');
-		this.$spanDelete = $('<span>').attr({'class' : this.className+'_delete'}).text('-');
-		this.$spanTextAbout = $('<span>').attr({'class' : this.className+'_textAbout'}).text(this.textAbout);
-		this.htmlCode
-			.append(this.$spanSubmit)
-			.append(this.$spanAddPlus)
-			.append(this.$spanDelete)
-			.append(this.$spanTextAbout);
-	} else if ( codeAction == 'changeSubmit' ) {
-		var submitNum = this.$spanSubmit.text();
-		submitNum++;
-		this.$spanSubmit.text( submitNum );
-	}
-		return this.htmlCode;
+	this.htmlCode = $('<div>').attr({'class' : this.className});
+	this.$spanSubmit = $('<span>').attr({'class' : this.className+'_submit'}).text(this.submit);
+	this.$spanAddPlus = $('<span>').attr({'class' : this.className+'_addPlus'}).text('+');
+	this.$spanDelete = $('<span>').attr({'class' : this.className+'_delete'}).text('-');
+	this.$spanTextAbout = $('<span>').attr({'class' : this.className+'_textAbout'}).text(this.textAbout);
+	this.htmlCode
+		.append(this.$spanSubmit)
+		.append(this.$spanAddPlus)
+		.append(this.$spanDelete)
+		.append(this.$spanTextAbout);
+
+	return this.htmlCode;
 }	
 // // // ------------- end class Reviews -----------------
 //# sourceMappingURL=main.js.map
