@@ -11,7 +11,7 @@
 		<script src="js/main.js"></script>
 		<script>
 			var catalog = new Catalog();
-			catalog.render('#catalog-wrapper');
+			$('#catalog-wrapper').append( catalog.render('Каталог') );
 		</script>
 	</body>
 </html>

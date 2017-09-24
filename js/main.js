@@ -8,7 +8,7 @@ function Container() {
 Container.prototype.render = function() {
 	return this.htmlCode;
 }
-// ------------- Catalog ------------------
+// // ------------- Catalog ------------------
 function Catalog() {
 	Container.call(this);
 
@@ -16,12 +16,13 @@ function Catalog() {
 	this.className = 'catalog';
 	this.goodItems = [];
 	this.htmlCode = '';
+
+	this.makeGoodItems();
 }
 Catalog.prototype = Object.create(Container.prototype);
 Catalog.prototype.constructor = Catalog;
 
-Catalog.prototype.render = function(wrapper) {
-	this.htmlCode = $('<div>').attr({'id':this.id});
+Catalog.prototype.makeGoodItems = function() {
 	$.ajax({
 		url : 'catalog.json',
 		dataType : 'json',
@@ -35,42 +36,47 @@ Catalog.prototype.render = function(wrapper) {
 			$(data.goods).each(function() {
 				self.goodItems.push( new Good( this ) );
 			});
+			$(this.goodItems).each(function() {
+				this.generateMarkup();
+			});
 		}
 	});
-	this.htmlCode.appendTo(wrapper);
 }
-// ----------- class Good ------------------
+
+Catalog.prototype.render = function() {
+	this.htmlCode = $('<div>').attr({'id':this.id});
+	this.htmlCode.append( $('<div>').text('Каталог') );
+	return this.htmlCode;
+}
+// // ----------- class Good ------------------
 function Good( options ) {
 	Container.call(this);
 
 	this.id = options.id_product;
 	this.price = options.price;
 	this.name = options.name;
-	this.reviewsAndSubmits = options.reviewsAndSubmits;
 	this.objReviewsAndSubmits = new Reviews( this.id, options.reviewsAndSubmits );
 	this.className = 'good';
 	this.htmlCode = '';
-
-	this.generateMarkup();
 }
 Good.prototype = Object.create(Container.prototype);
 Good.prototype.constructor = Good;
 
 Good.prototype.render = function() {
-	this.htmlCode = $('<div>').attr({'id' : 'good_' + this.id, 'class' : 'good'});
-	this.htmlCode
-		.append( $('<div>').attr({'class' : 'good_name'}).text(this.name) )
-		.append( $('<div>').attr({'class' : 'good_price'}).text(this.price + ' руб.') )
-		.append( $('<button>').attr({'class' : 'good_button_buy'}).text('Купить') );
+		this.htmlCode = $('<div>').attr({'id' : 'good_' + this.id, 'class' : 'good'});
+		this.htmlCode
+			.append( $('<div>').attr({'class' : 'good_name'}).text(this.name) )
+			.append( $('<div>').attr({'class' : 'good_price'}).text(this.price + ' руб.') )
+			.append( $('<button>').attr({'class' : 'good_button_buy'}).text('Купить') );
+
 	return this.htmlCode;
 }
 Good.prototype.generateMarkup = function() {
 	$('#catalog').append( this.render() );
 	this.objReviewsAndSubmits.generateMarkup();
 }
-// --------------- end class Good ---------------
-
-// ------------- class Reviews -----------------
+// // --------------- end class Good ---------------
+// // ------------- class Reviews -----------------
 function Reviews( idProduct, list ) {
 	Container.call(this);
 
@@ -78,6 +84,7 @@ function Reviews( idProduct, list ) {
 	this.ArrayObjsReviewAndSubmit = this.makeArrayObjsReviewAndSubmit(list);
 	this.className = 'reviews';
 	this.htmlCode = '';
+	this.reviewsBlockHtmlCode = '';
 }
 Reviews.prototype = Object.create(Container.prototype);
 Reviews.prototype.constructor = Reviews;
@@ -91,16 +98,26 @@ Reviews.prototype.makeArrayObjsReviewAndSubmit = function(list) {
 }
 Reviews.prototype.generateMarkup = function() {
 	var self = this;
-	$( '#good_' + this.id ).append( this.render() );
+	if (!this.htmlCode)
+		$( '#good_' + this.id ).append( this.render() );
+	this.htmlCode.append( this.generateBlockReview() );	
+}
+Reviews.prototype.generateBlockReview = function() {
+	if (!this.reviewsBlockHtmlCode)
+		this.reviewsBlockHtmlCode = $('<div>');
+	var self = this;
+	var result = $('<div>');
 	$(this.ArrayObjsReviewAndSubmit).each(function() {
-		this.render(self.id);
+		this.render().appendTo( result );
 	});
+	this.reviewsBlockHtmlCode.html(result);
+	return this.reviewsBlockHtmlCode
 }
 Reviews.prototype.renderModale = function() {
 	var self = this;
 	var $divModale = $('<div>').attr({'class':'modale'}).text('Введите текст отзыва.');
 	var $formModale = $('<form>').attr({'class':'form_modale'})
-			.append( $('<input>').attr({'type':'text','class':'input_modale'}) )
+			.append( $('<input>').attr({'type':'text','class':'input_modale','autofocus':'true'}) )
 			.append( $('<button>').attr({'class':'button_modale'}).text('OK') );
 
 	$divModale.append( $formModale );
@@ -109,11 +126,11 @@ Reviews.prototype.renderModale = function() {
 	$divModale.on('click', '.button_modale', function(e) {
 		e.preventDefault();
 		self.newReviewText = $(this).parent().find('.input_modale').val();
-		self.ArrayObjsReviewAndSubmit[self.ArrayObjsReviewAndSubmit.length] = new Review({
+		self.ArrayObjsReviewAndSubmit[ self.ArrayObjsReviewAndSubmit.length ] = new Review({
 			submit : 0,
 			textAbout : self.newReviewText
 		});
-		self.ArrayObjsReviewAndSubmit[self.ArrayObjsReviewAndSubmit.length - 1].render(self.id);
+		self.htmlCode.append( self.ArrayObjsReviewAndSubmit[ self.ArrayObjsReviewAndSubmit.length - 1 ].render() );
 		$divModale.remove();
 	});
 }
@@ -122,26 +139,40 @@ Reviews.prototype.render = function() {
 	this.htmlCode = $('<div>').attr({'class' : this.className}).text('Отзывы');
 	this.htmlCode
 		.append( $('<div>').attr({'class' : this.className+'_addNewReview'}).text('Добавить отзыв') );
-
+// ---------- on -------
 	this.htmlCode.on('click', '.'+this.className+'_addNewReview', function() {
 		self.renderModale();
 	});
 
-	this.htmlCode.on('click', '.review_addPlus', function(e) {
-		var submitVal = $(this).parent().find('.review_submit').text();
-		submitVal++;
-		$(this).parent().find('.review_submit').text(submitVal);
+	this.htmlCode.on('click', '.review_addPlus', this.ArrayObjsReviewAndSubmit, function(e) {
+		var $divReview = $(e.target).parent();
+		var $divReviews = $(e.target).parent().parent();
+		$divReviews.find('.review').filter(function(ind) {
+			if ( $(this).get(0) == $divReview.get(0) ) {
+				e.data[ind].render('changeSubmit');
+				return
+			}
+		});
 	});
 
-	this.htmlCode.on('click', '.review_delete', function(e) {
-		$(this).parent().remove();
+	this.htmlCode.on('click', '.review_delete', this, function(e) {
+		var $divReview = $(e.target).parent();
+		var $divReviews = $(e.target).parent().parent();
+		$divReviews.find('.review').filter(function(ind) {
+			if ( $(this).get(0) == $divReview.get(0) ) {
+				e.data.ArrayObjsReviewAndSubmit.splice([ind],1);
+				e.data.htmlCode.find('.review').remove();
+				e.data.generateMarkup();
+				return
+			}
+		});
 	});
-
+// ---------- end on -------
 	return this.htmlCode;
 }
-// // ------------- end class Reviews -----------------
+// // // ------------- end class Reviews -----------------
 
-// // ------------- class Reviews -----------------
+// // // ------------- class Reviews -----------------
 function Review( options ) {
 	Container.call(this);
 
@@ -153,19 +184,24 @@ function Review( options ) {
 Review.prototype = Object.create(Container.prototype);
 Review.prototype.constructor = Review;
 
-Review.prototype.render = function( idProduct ) {
+Review.prototype.render = function(codeAction) {
+	if (!this.htmlCode) {
 		this.htmlCode = $('<div>').attr({'class' : this.className});
-		var $spanSubmit = ( $('<span>').attr({'class' : this.className+'_submit'}).text(this.submit) );
-		var $spanAddPlus = ( $('<span>').attr({'class' : this.className+'_addPlus'}).text('+') );
-		var $spanDelete = ( $('<span>').attr({'class' : this.className+'_delete'}).text('-') );
-		var $spanTextAbout = ( $('<span>').attr({'class' : this.className+'_textAbout'}).text(this.textAbout) );
+		this.$spanSubmit = $('<span>').attr({'class' : this.className+'_submit'}).text(this.submit);
+		this.$spanAddPlus = $('<span>').attr({'class' : this.className+'_addPlus'}).text('+');
+		this.$spanDelete = $('<span>').attr({'class' : this.className+'_delete'}).text('-');
+		this.$spanTextAbout = $('<span>').attr({'class' : this.className+'_textAbout'}).text(this.textAbout);
 		this.htmlCode
-			.append($spanSubmit)
-			.append($spanAddPlus)
-			.append($spanDelete)
-			.append($spanTextAbout);
-	$( '#good_' + idProduct ).find('.reviews').append( this.htmlCode );
-}
-
-// // ------------- end class Reviews -----------------
+			.append(this.$spanSubmit)
+			.append(this.$spanAddPlus)
+			.append(this.$spanDelete)
+			.append(this.$spanTextAbout);
+	} else if ( codeAction == 'changeSubmit' ) {
+		var submitNum = this.$spanSubmit.text();
+		submitNum++;
+		this.$spanSubmit.text( submitNum );
+	}
+		return this.htmlCode;
+}	
+// // // ------------- end class Reviews -----------------
 //# sourceMappingURL=main.js.map
